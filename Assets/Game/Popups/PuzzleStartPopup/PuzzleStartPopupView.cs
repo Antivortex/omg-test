@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using EngineCore;
 using EngineCore.UI;
 using UnityEngine;
 using UnityEngine.UI;
@@ -27,6 +28,7 @@ namespace Game.Popups.PuzzleStartPopup
         public event Action OnCloseClicked;
 
         private readonly List<GameObject> _thumbnailObjects = new List<GameObject>();
+        private GoPool _thumbnailPool;
         private int _currentSelectedIndex = -1;
         private bool _buttonsInitialized;
 
@@ -46,14 +48,20 @@ namespace Game.Popups.PuzzleStartPopup
 
         public void SetThumbnails(Sprite[] sprites)
         {
+            if (_thumbnailPool == null)
+                _thumbnailPool = new GoPool(_thumbnailContainer);
+
+            //if any objects instantiated, return them to the pool
             foreach (var obj in _thumbnailObjects)
-                Destroy(obj);
+            {
+                obj.GetComponent<Button>().onClick.RemoveAllListeners();
+                _thumbnailPool.Return(obj);
+            }
             _thumbnailObjects.Clear();
 
             for (int i = 0; i < sprites.Length; i++)
             {
-                var thumbnailObj = new GameObject($"Thumbnail_{i}", typeof(RectTransform), typeof(Image), typeof(Button));
-                thumbnailObj.transform.SetParent(_thumbnailContainer, false);
+                var thumbnailObj = _thumbnailPool.Get($"Thumbnail_{i}", typeof(RectTransform), typeof(Image), typeof(Button));
 
                 var rectTransform = thumbnailObj.GetComponent<RectTransform>();
                 rectTransform.sizeDelta = new Vector2(_thumbnailSize, _thumbnailSize);
@@ -61,8 +69,10 @@ namespace Game.Popups.PuzzleStartPopup
                 var image = thumbnailObj.GetComponent<Image>();
                 image.sprite = sprites[i];
                 image.preserveAspect = true;
+                image.color = _normalColor;
 
                 var button = thumbnailObj.GetComponent<Button>();
+                button.onClick.RemoveAllListeners();
                 int index = i;
                 button.onClick.AddListener(() => OnThumbnailSelected?.Invoke(index));
 
