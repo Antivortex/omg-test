@@ -13,7 +13,7 @@ namespace Game.Popups.PuzzleStartPopup
         public PuzzleStartPopupPresenter(PuzzleStartPopupModel model, IContext context)
         {
             _model = model;
-            _resourceManager = context.Resolve<ResourceManager>();
+            _resourceManager = context.Resolve<IResourceManager>();
         }
 
         protected override void OnInitialize()
